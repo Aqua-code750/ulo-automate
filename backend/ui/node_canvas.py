@@ -51,7 +51,10 @@ class NodeCanvasWidget(QWidget):
         self.graph_widget = self.graph.widget
         self.layout.addWidget(self.graph_widget)
         
-        # Enable Drag and Drop
+        # Enable Drag and Drop via Event Filter on the graph viewer
+        self.viewer = self.graph.viewer()
+        self.viewer.viewport().installEventFilter(self)
+        self.viewer.installEventFilter(self)
         self.setAcceptDrops(True)
         
         # Connect Signals
@@ -118,28 +121,40 @@ class NodeCanvasWidget(QWidget):
         t = threading.Thread(target=executor.run)
         t.start()
 
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasText():
-            event.acceptProposedAction()
-
-    def dropEvent(self, event):
-        text = event.mimeData().text()
-        pos = self.graph.viewer().mapToScene(event.pos())
-        
-        # Create node at drop position
-        n = self.graph.create_node('ulo.nodes.BaseTaskNode', name=text, pos=[pos.x(), pos.y()])
-        n.set_property('task_desc', text)
-        # Apply n8n specific colors
-        n.set_color(30, 30, 30)
-        n.set_text_color(255, 255, 255)
-        if "Trigger" in text:
-            n.set_color(40, 150, 90)  # Green
-        elif "AI" in text:
-            n.set_color(150, 60, 200) # Purple
-        elif "Action" in text:
-            n.set_color(40, 100, 200) # Blue
-            
-        event.acceptProposedAction()
+    def eventFilter(self, obj, event):
+        from PySide6.QtCore import QEvent
+        if event.type() == QEvent.Type.DragEnter:
+            if event.mimeData().hasText():
+                event.acceptProposedAction()
+                return True
+        elif event.type() == QEvent.Type.DragMove:
+            if event.mimeData().hasText():
+                event.acceptProposedAction()
+                return True
+        elif event.type() == QEvent.Type.Drop:
+            if event.mimeData().hasText():
+                text = event.mimeData().text()
+                # Get position mapping
+                drop_pos = event.position().toPoint() if hasattr(event, 'position') else event.pos()
+                scene_pos = self.viewer.mapToScene(drop_pos)
+                
+                # Create node at drop position
+                n = self.graph.create_node('ulo.nodes.BaseTaskNode', name=text, pos=[scene_pos.x(), scene_pos.y()])
+                n.set_property('task_desc', text)
+                n.set_color(30, 30, 30)
+                n.set_text_color(255, 255, 255)
+                
+                if "Trigger" in text:
+                    n.set_color(40, 150, 90)
+                elif "AI" in text:
+                    n.set_color(150, 60, 200)
+                elif "Action" in text:
+                    n.set_color(40, 100, 200)
+                    
+                event.acceptProposedAction()
+                return True
+                
+        return super().eventFilter(obj, event)
 
     def on_generate_clicked(self):
         prompt = self.prompt_input.text()
