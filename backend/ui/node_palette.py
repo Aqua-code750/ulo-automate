@@ -121,6 +121,7 @@ class NodePaletteWidget(QWidget):
             "Agent: Summarize Thread",
             
             # Additional Office Utilities
+            "Office: Generate Word Document",
             "Office: Read Excel (xlsx)",
             "Office: Write Excel (xlsx)",
             "Office: Extract PDF Text",

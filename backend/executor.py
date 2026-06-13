@@ -258,7 +258,37 @@ class WorkflowExecutor:
     def _handle_office(self, task_type, props):
         path = props.get("file_path", "")
         
-        if "Excel" in task_type:
+        if "Word" in task_type:
+            template_path = props.get("template_path", "")
+            input_data_str = props.get("input_data", "{}")
+            
+            try:
+                input_data = json.loads(input_data_str)
+            except Exception as e:
+                return {"error": f"Failed to parse input_data as JSON: {e}"}
+                
+            if template_path and os.path.exists(template_path):
+                try:
+                    from docxtpl import DocxTemplate
+                    doc = DocxTemplate(template_path)
+                    doc.render(input_data)
+                    doc.save(path)
+                    return {"status": "success", "file": path, "method": "template"}
+                except Exception as e:
+                    return {"error": f"DocxTemplate failed: {e}"}
+            else:
+                try:
+                    import docx
+                    doc = docx.Document()
+                    doc.add_heading('Automated Report', 0)
+                    for k, v in input_data.items():
+                        doc.add_paragraph(f"{k}: {v}")
+                    doc.save(path)
+                    return {"status": "success", "file": path, "method": "new_document"}
+                except Exception as e:
+                    return {"error": f"python-docx failed: {e}"}
+                    
+        elif "Excel" in task_type:
             try:
                 import openpyxl
             except ImportError:
@@ -408,8 +438,12 @@ class WorkflowExecutor:
         if "Base64" in task_type:
             if not input_data:
                 return {"data_result": "Error: No input_data provided"}
-            encoded = base64.b64encode(input_data.encode('utf-8')).decode('utf-8')
-            return {"data_result": encoded}
+            if "Encode" in task_type:
+                encoded = base64.b64encode(input_data.encode('utf-8')).decode('utf-8')
+                return {"data_result": encoded}
+            elif "Decode" in task_type:
+                decoded = base64.b64decode(input_data.encode('utf-8')).decode('utf-8')
+                return {"data_result": decoded}
         elif "UUID" in task_type:
             return {"data_result": str(uuid.uuid4())}
         elif "Hash" in task_type:
@@ -418,4 +452,23 @@ class WorkflowExecutor:
             m = hashlib.sha256()
             m.update(input_data.encode('utf-8'))
             return {"data_result": m.hexdigest()}
+        elif "Parse JSON" in task_type:
+            if not input_data: return {"data_result": "Error: No input_data provided"}
+            try:
+                parsed = json.loads(input_data)
+                return {"data_result": parsed}
+            except Exception as e:
+                return {"data_result": f"Error parsing JSON: {e}"}
+        elif "Parse CSV" in task_type:
+            if not input_data: return {"data_result": "Error: No input_data provided"}
+            import csv
+            import io
+            try:
+                reader = csv.DictReader(io.StringIO(input_data))
+                rows = [row for row in reader]
+                return {"data_result": rows}
+            except Exception as e:
+                return {"data_result": f"Error parsing CSV: {e}"}
+                
         return {"data_result": "Data formatted correctly."}
+

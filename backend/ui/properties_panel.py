@@ -248,9 +248,17 @@ class PropertiesPanelWidget(QWidget):
             add_field("max_iterations", "Max Iterations", "text", "5")
             add_field("tools", "Allowed Tools (comma separated)", "text", "python,http,slack")
         elif "Office" in task_type:
-            add_field("file_path", "File Path", "text", "C:/data/report.xlsx")
-            add_field("sheet_name", "Sheet Name", "text", "Sheet1")
-            add_field("cell_range", "Cell Range", "text", "A1:D10")
+            if "Word" in task_type:
+                add_field("file_path", "Output File Path", "text", "C:/data/report.docx")
+                add_field("template_path", "Template Path (Optional)", "text", "C:/data/template.docx")
+                add_field("input_data", "Input Data (JSON Object)", "textarea", '{"name": "Alice", "date": "2026-06-13"}')
+            else:
+                add_field("file_path", "File Path", "text", "C:/data/report.xlsx")
+                add_field("sheet_name", "Sheet Name", "text", "Sheet1")
+                if "Write" in task_type:
+                    add_field("input_data", "Input Data (JSON 2D Array)", "textarea", '[[ "Name", "Age" ], [ "Alice", 30 ]]')
+                else:
+                    add_field("cell_range", "Cell Range", "text", "A1:D10")
         elif "Security" in task_type or "Veracode" in task_type or "Falcon" in task_type:
             add_field("api_id", "API ID / Client ID", "text", "vera_id_...")
             add_field("api_key", "API Key / Secret", "text", "vera_key_...")
