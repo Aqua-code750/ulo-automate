@@ -12,6 +12,15 @@ class BaseTaskNode(BaseNode):
         self.add_output('out', color=(180, 80, 180))
         self.add_text_input('task_desc', 'Task', tab='Properties')
 
+class TriggerTaskNode(BaseNode):
+    __identifier__ = 'ulo.nodes'
+    NODE_NAME = 'Trigger Node'
+
+    def __init__(self):
+        super(TriggerTaskNode, self).__init__()
+        self.add_output('out', color=(180, 80, 180))
+        self.add_text_input('task_desc', 'Task', tab='Properties')
+
 class NodeCanvasWidget(QWidget):
     node_selected = Signal(object)
     execution_finished = Signal(object)
@@ -44,6 +53,7 @@ class NodeCanvasWidget(QWidget):
         # Node Graph
         self.graph = NodeGraph()
         self.graph.register_node(BaseTaskNode)
+        self.graph.register_node(TriggerTaskNode)
         
         # Apply n8n style graph colors
         self.graph.set_background_color(30, 30, 30)
@@ -142,7 +152,11 @@ class NodeCanvasWidget(QWidget):
                 text = mime_data.text()
                 
                 # Create node at the drop position
-                n = self.graph.create_node('ulo.nodes.BaseTaskNode', name=text, pos=[pos.x(), pos.y()])
+                if "Trigger" in text:
+                    n = self.graph.create_node('ulo.nodes.TriggerTaskNode', name=text, pos=[pos.x(), pos.y()])
+                else:
+                    n = self.graph.create_node('ulo.nodes.BaseTaskNode', name=text, pos=[pos.x(), pos.y()])
+                
                 n.set_property('task_desc', text)
                 n.set_color(30, 30, 30)
                 n.set_text_color(255, 255, 255)
