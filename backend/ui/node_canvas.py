@@ -119,21 +119,25 @@ class NodeCanvasWidget(QWidget):
         t.start()
 
     def _on_data_dropped(self, mime_data, pos):
-        if mime_data.hasText():
-            text = mime_data.text()
-            
-            # Create node at the drop position
-            n = self.graph.create_node('ulo.nodes.BaseTaskNode', name=text, pos=[pos.x(), pos.y()])
-            n.set_property('task_desc', text)
-            n.set_color(30, 30, 30)
-            n.set_text_color(255, 255, 255)
-            
-            if "Trigger" in text:
-                n.set_color(40, 150, 90)
-            elif "AI" in text:
-                n.set_color(150, 60, 200)
-            elif "Action" in text:
-                n.set_color(40, 100, 200)
+        try:
+            if mime_data.hasText():
+                text = mime_data.text()
+                
+                # Create node at the drop position
+                n = self.graph.create_node('ulo.nodes.BaseTaskNode', name=text, pos=[pos.x(), pos.y()])
+                n.set_property('task_desc', text)
+                n.set_color(30, 30, 30)
+                n.set_text_color(255, 255, 255)
+                
+                if "Trigger" in text:
+                    n.set_color(40, 150, 90)
+                elif "AI" in text:
+                    n.set_color(150, 60, 200)
+                elif "Action" in text:
+                    n.set_color(40, 100, 200)
+        except Exception as e:
+            with open('drop_error.txt', 'w') as f:
+                f.write(str(e))
 
     def on_generate_clicked(self):
         prompt = self.prompt_input.text()

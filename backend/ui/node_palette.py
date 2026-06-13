@@ -2,6 +2,18 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QListWidget, QLis
 from PySide6.QtCore import Qt, QMimeData, QByteArray
 from PySide6.QtGui import QDrag
 
+class NodeListWidget(QListWidget):
+    def startDrag(self, supportedActions):
+        item = self.currentItem()
+        if not item:
+            return
+            
+        drag = QDrag(self)
+        mime_data = QMimeData()
+        mime_data.setText(item.text())
+        drag.setMimeData(mime_data)
+        drag.exec(supportedActions)
+
 class NodePaletteWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -18,7 +30,7 @@ class NodePaletteWidget(QWidget):
         self.search_bar.textChanged.connect(self.filter_nodes)
         self.layout.addWidget(self.search_bar)
 
-        self.list_widget = QListWidget()
+        self.list_widget = NodeListWidget()
         self.list_widget.setStyleSheet("background-color: #1e1e1e; border: none; outline: none; color: #d4d4d4;")
         self.list_widget.setDragEnabled(True)
         self.list_widget.viewport().setAcceptDrops(False)
@@ -147,27 +159,7 @@ class NodePaletteWidget(QWidget):
             item = self.list_widget.item(i)
             item.setHidden(text.lower() not in item.text().lower())
 
-    def startDrag(self, supportedActions):
-        item = self.list_widget.currentItem()
-        if not item:
-            return
-            
-        drag = QDrag(self)
-        mime_data = QMimeData()
-        mime_data.setText(item.text())
-        drag.setMimeData(mime_data)
-        drag.exec(supportedActions)
-
-    # Override the default list widget mouse press to handle custom drag
-    def mousePressEvent(self, event):
-        super().mousePressEvent(event)
-        if event.button() == Qt.LeftButton:
-            item = self.list_widget.itemAt(event.pos())
-            if item:
-                self.list_widget.setCurrentItem(item)
-                drag = QDrag(self)
-                mime_data = QMimeData()
-                # Pass the node type as text
-                mime_data.setText(item.text())
-                drag.setMimeData(mime_data)
-                drag.exec(Qt.CopyAction)
+    def filter_nodes(self, text):
+        for i in range(self.list_widget.count()):
+            item = self.list_widget.item(i)
+            item.setHidden(text.lower() not in item.text().lower())
