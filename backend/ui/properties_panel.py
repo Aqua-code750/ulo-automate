@@ -259,7 +259,7 @@ class PropertiesPanelWidget(QWidget):
             if "Falcon" in task_type:
                 add_field("host_id", "Target Host ID", "text", "aid_12345")
         elif "JSON" in task_type or "CSV" in task_type or "Data" in task_type:
-            add_field("data_source", "Data Source Variable", "text", "payload.http_response")
+            add_field("input_data", "Input Data", "text", "{{ payload['node_X']['result'] }}")
         elif "Logic" in task_type:
             add_field("variable_name", "Variable Name", "text", "my_var")
             add_field("condition", "Condition expression", "text", "payload['count'] > 10")

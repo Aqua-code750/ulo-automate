@@ -115,17 +115,17 @@ class NodePaletteWidget(QWidget):
             "Action: Extract Audio",
             
             # AI Agents (ReAct Loop)
-            "Agent: Create Persona",
-            "Agent: Chat Memory",
-            "Agent: Attach Tool",
-            "Agent: Summarize Thread",
+            "[MOCK] Agent: Create Persona",
+            "[MOCK] Agent: Chat Memory",
+            "[MOCK] Agent: Attach Tool",
+            "[MOCK] Agent: Summarize Thread",
             
             # Additional Office Utilities
-            "Office: Read Excel (xlsx)",
-            "Office: Write Excel (xlsx)",
-            "Office: Extract PDF Text",
-            "Office: Send Microsoft Teams Message",
-            "Office: Read Outlook Email",
+            "[MOCK] Office: Read Excel (xlsx)",
+            "[MOCK] Office: Write Excel (xlsx)",
+            "[MOCK] Office: Extract PDF Text",
+            "[MOCK] Office: Send Microsoft Teams Message",
+            "[MOCK] Office: Read Outlook Email",
             
             # Data Formatting & Crypto
             "Data: Encode Base64",
@@ -135,10 +135,10 @@ class NodePaletteWidget(QWidget):
             "Data: HMAC Signature",
             
             # Security & DevSecOps
-            "Security: Veracode SAST Scan",
-            "Security: Veracode Get Flaws",
-            "Security: CrowdStrike Falcon Alert",
-            "Security: CrowdStrike Contain Host",
+            "[MOCK] Security: Veracode SAST Scan",
+            "[MOCK] Security: Veracode Get Flaws",
+            "[MOCK] Security: CrowdStrike Falcon Alert",
+            "[MOCK] Security: CrowdStrike Contain Host",
             
             # Advanced Control Flow
             "Logic: Try/Catch",

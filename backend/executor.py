@@ -3,6 +3,7 @@ import os
 import requests
 import json
 import subprocess
+import re
 from collections import deque
 from dotenv import load_dotenv
 
@@ -43,12 +44,16 @@ class WorkflowExecutor:
             props = node.get('props', {})
             
             # Simple Variable Substitution
-            # Replaces placeholders like {{some_var}} with data from payload if needed
-            # For this prototype, we just pass the entire payload into the dispatcher
+            # Replaces placeholders like {{some_var}} with data from payload
+            try:
+                resolved_props = self._resolve_props(props, payload)
+            except Exception as e:
+                print(f"Error resolving variables for {current_id}: {e}")
+                resolved_props = props
             
             try:
                 time.sleep(0.5) # small visual delay
-                result = self._dispatch(task_type, props, payload)
+                result = self._dispatch(task_type, resolved_props, payload)
                 
                 # Merge result into payload namespace safely
                 payload[f"node_{current_id}"] = result
@@ -74,6 +79,29 @@ class WorkflowExecutor:
         if self.done_cb:
             self.done_cb(payload)
         return True
+
+    def _resolve_props(self, props, payload):
+        """Recursively resolves {{ }} placeholders in properties using eval against the payload."""
+        resolved = {}
+        for k, v in props.items():
+            if isinstance(v, str):
+                # Find all {{ expr }}
+                def replacer(match):
+                    expr = match.group(1).strip()
+                    try:
+                        # Safely eval the expression with 'payload' as a local variable
+                        # e.g., {{ payload['node_123']['http_response'] }}
+                        val = eval(expr, {"__builtins__": {}}, {"payload": payload})
+                        return str(val) if val is not None else ""
+                    except Exception as e:
+                        return f"{{ERROR: {e}}}"
+                
+                resolved[k] = re.sub(r'\{\{(.*?)\}\}', replacer, v)
+            elif isinstance(v, dict):
+                resolved[k] = self._resolve_props(v, payload)
+            else:
+                resolved[k] = v
+        return resolved
 
     def _dispatch(self, task_type, props, payload):
         """Dynamic dispatch based on task type"""
@@ -256,12 +284,19 @@ class WorkflowExecutor:
         import hashlib
         import uuid
         
+        input_data = props.get("input_data", "").strip()
+        
         if "Base64" in task_type:
-            return {"data_result": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo="}
+            if not input_data:
+                return {"data_result": "Error: No input_data provided"}
+            encoded = base64.b64encode(input_data.encode('utf-8')).decode('utf-8')
+            return {"data_result": encoded}
         elif "UUID" in task_type:
             return {"data_result": str(uuid.uuid4())}
         elif "Hash" in task_type:
+            if not input_data:
+                return {"data_result": "Error: No input_data provided"}
             m = hashlib.sha256()
-            m.update(b"automation_is_cool")
+            m.update(input_data.encode('utf-8'))
             return {"data_result": m.hexdigest()}
         return {"data_result": "Data formatted correctly."}
