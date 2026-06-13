@@ -92,6 +92,9 @@ class WorkflowExecutor:
                         # Safely eval the expression with 'payload' as a local variable
                         # e.g., {{ payload['node_123']['http_response'] }}
                         val = eval(expr, {"__builtins__": {}}, {"payload": payload})
+                        if isinstance(val, (dict, list)):
+                            import json
+                            return json.dumps(val)
                         return str(val) if val is not None else ""
                     except Exception as e:
                         return f"{{ERROR: {e}}}"
