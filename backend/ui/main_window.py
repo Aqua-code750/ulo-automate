@@ -52,4 +52,5 @@ class UloMainWindow(QMainWindow):
         
         # Connect signals
         self.builder_tab.node_selected.connect(self.properties_widget.set_node)
+        self.builder_tab.execution_finished.connect(self.properties_widget.set_execution_results)
 

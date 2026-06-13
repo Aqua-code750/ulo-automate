@@ -76,17 +76,10 @@ class NodeCanvasWidget(QWidget):
         self.execution_finished.connect(self.show_results, Qt.UniqueConnection)
 
     def show_results(self, payload):
-        from PySide6.QtWidgets import QMessageBox
-        import json
-        
-        # Filter out verbose global/node tracking for a cleaner popup
-        clean_payload = {k: v for k, v in payload.items() if not k.startswith("node_")}
-        
-        msg = QMessageBox(self)
-        msg.setWindowTitle("Workflow Completed Successfully!")
-        msg.setText("Your nodes have finished executing. Here is the output:")
-        msg.setDetailedText(json.dumps(clean_payload, indent=2))
-        msg.exec()
+        # We will emit this or store it so properties_panel can access it.
+        # But wait, execution_finished already emits the payload!
+        # The main window will connect to execution_finished to pass the payload to properties panel.
+        pass
 
     def _on_node_selected(self, node):
         self.node_selected.emit(node)
@@ -158,15 +151,30 @@ class NodeCanvasWidget(QWidget):
                     n = self.graph.create_node('ulo.nodes.BaseTaskNode', name=text, pos=[pos.x(), pos.y()])
                 
                 n.set_property('task_desc', text)
-                n.set_color(30, 30, 30)
+                
+                # Default Text Color
                 n.set_text_color(255, 255, 255)
                 
+                # Brand Colors
                 if "Trigger" in text:
-                    n.set_color(40, 150, 90)
-                elif "AI" in text:
-                    n.set_color(150, 60, 200)
-                elif "Action" in text:
-                    n.set_color(40, 100, 200)
+                    n.set_color(16, 185, 129) # Emerald Green
+                elif "Slack" in text:
+                    n.set_color(74, 21, 75)   # Slack Purple
+                elif "AI" in text or "Gemini" in text or "OpenAI" in text:
+                    n.set_color(116, 80, 214) # Deep Violet
+                elif "Office" in text or "Excel" in text:
+                    n.set_color(33, 115, 70)  # Excel Green
+                elif "HTTP" in text:
+                    n.set_color(14, 165, 233) # Ocean Blue
+                elif "Python" in text:
+                    n.set_color(55, 118, 171) # Python Blue
+                elif "Security" in text or "Veracode" in text or "Falcon" in text:
+                    n.set_color(220, 38, 38)  # Crimson Red
+                else:
+                    n.set_color(71, 85, 105)  # Slate Grey
+                    
+                # Highlight borders
+                n.set_property('border_color', [255, 255, 255, 50])
         except Exception as e:
             with open('drop_error.txt', 'w') as f:
                 f.write(str(e))

@@ -1,5 +1,8 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QTextEdit, QScrollArea, QFormLayout, QComboBox, QCheckBox, QPushButton
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QLineEdit, 
+                               QTextEdit, QScrollArea, QFormLayout, QComboBox, 
+                               QCheckBox, QPushButton, QTabWidget)
 from PySide6.QtCore import Qt
+import json
 
 class PropertiesPanelWidget(QWidget):
     def __init__(self, parent=None):
@@ -11,43 +14,125 @@ class PropertiesPanelWidget(QWidget):
         self.title.setStyleSheet("font-size: 16px; font-weight: bold; color: #ffffff; padding-bottom: 10px;")
         self.layout.addWidget(self.title)
 
-        # Scroll area for dynamic content
+        # Main Tabs
+        self.tabs = QTabWidget()
+        self.tabs.setStyleSheet("""
+            QTabWidget::pane {
+                border: 1px solid #444;
+                border-radius: 4px;
+                background: #1e1e1e;
+            }
+            QTabBar::tab {
+                background: #2b2b2b;
+                color: #888;
+                border: 1px solid #444;
+                border-bottom: none;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+                padding: 8px 16px;
+                margin-right: 2px;
+            }
+            QTabBar::tab:selected {
+                background: #1e1e1e;
+                color: #ffffff;
+                font-weight: bold;
+            }
+            QTabBar::tab:hover:!selected {
+                background: #3a3a3a;
+                color: #ddd;
+            }
+        """)
+        self.layout.addWidget(self.tabs)
+
+        # Tab 1: Configuration (Scroll Area)
+        self.config_tab = QWidget()
+        self.config_layout = QVBoxLayout(self.config_tab)
+        self.config_layout.setContentsMargins(0, 0, 0, 0)
+        
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
         
         self.content_widget = QWidget()
         self.form_layout = QFormLayout(self.content_widget)
-        self.form_layout.setContentsMargins(0, 0, 0, 0)
+        self.form_layout.setContentsMargins(10, 10, 10, 10)
         self.form_layout.setLabelAlignment(Qt.AlignLeft)
+        self.form_layout.setVerticalSpacing(12)
         
-        # Styles for inputs
+        # Premium input styles
         self.input_style = """
             QLineEdit, QTextEdit, QComboBox {
                 background-color: #2b2b2b;
                 color: #ffffff;
                 border: 1px solid #444;
-                border-radius: 4px;
-                padding: 5px;
+                border-radius: 6px;
+                padding: 8px;
+                font-family: 'Segoe UI', Inter, sans-serif;
             }
             QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
                 border: 1px solid #7289da;
+                background-color: #333333;
             }
-            QLabel { color: #d4d4d4; font-weight: bold; }
+            QLabel { 
+                color: #d4d4d4; 
+                font-weight: 600; 
+                font-family: 'Segoe UI', Inter, sans-serif;
+            }
+            QCheckBox {
+                color: #d4d4d4;
+            }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border-radius: 4px;
+                border: 1px solid #444;
+                background: #2b2b2b;
+            }
+            QCheckBox::indicator:checked {
+                background: #7289da;
+                border: 1px solid #7289da;
+            }
         """
         self.content_widget.setStyleSheet(self.input_style)
-        
         self.scroll.setWidget(self.content_widget)
-        self.layout.addWidget(self.scroll)
+        self.config_layout.addWidget(self.scroll)
+        
+        # Tab 2: Output Viewer
+        self.output_tab = QWidget()
+        self.output_layout = QVBoxLayout(self.output_tab)
+        self.output_layout.setContentsMargins(10, 10, 10, 10)
+        
+        self.output_text = QTextEdit()
+        self.output_text.setReadOnly(True)
+        self.output_text.setStyleSheet("""
+            QTextEdit {
+                background-color: #121212;
+                color: #a6e22e;
+                font-family: Consolas, monospace;
+                border: 1px solid #333;
+                border-radius: 6px;
+                padding: 10px;
+            }
+        """)
+        self.output_text.setText("{ // Execute workflow to see output\n}")
+        self.output_layout.addWidget(self.output_text)
+        
+        self.tabs.addTab(self.config_tab, "Config")
+        self.tabs.addTab(self.output_tab, "Output")
         
         self.current_node = None
         self.inputs = {}
+        self.payload = {}
         
         # Placeholder
         self._add_placeholder()
 
+    def set_execution_results(self, payload):
+        self.payload = payload
+        self._refresh_output()
+
     def _add_placeholder(self):
-        lbl = QLabel("Select a node to edit its properties.")
+        lbl = QLabel("Select a node on the canvas to configure it.")
         lbl.setStyleSheet("color: #888; font-style: italic;")
         self.form_layout.addRow(lbl)
 
@@ -66,7 +151,7 @@ class PropertiesPanelWidget(QWidget):
             return
             
         task_type = node.get_property('task_desc')
-        self.title.setText(f"Config: {task_type}")
+        self.title.setText(f"{task_type}")
         
         # Build dynamic form based on node type
         self._build_form(task_type)
@@ -75,12 +160,35 @@ class PropertiesPanelWidget(QWidget):
         save_btn = QPushButton("Save Properties")
         save_btn.setStyleSheet("""
             QPushButton {
-                background-color: #7289da; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; margin-top: 10px;
+                background-color: #7289da; 
+                color: white; 
+                border: none; 
+                padding: 10px; 
+                border-radius: 6px; 
+                font-weight: bold; 
+                margin-top: 15px;
             }
             QPushButton:hover { background-color: #5b6eae; }
         """)
         save_btn.clicked.connect(self.save_properties)
         self.form_layout.addRow(save_btn)
+        
+        self._refresh_output()
+
+    def _refresh_output(self):
+        if not self.current_node:
+            self.output_text.setText("{ // No node selected\n}")
+            return
+            
+        node_id = self.current_node.id
+        node_key = f"node_{node_id}"
+        
+        if node_key in self.payload:
+            node_result = self.payload[node_key]
+            self.output_text.setText(json.dumps(node_result, indent=2))
+            self.tabs.setCurrentIndex(1) # Switch to output tab
+        else:
+            self.output_text.setText("{ // No execution data for this node yet.\n  // Click 'Execute Workflow' to run.\n}")
 
     def _build_form(self, task_type):
         # We fetch existing custom properties from the node if they exist
