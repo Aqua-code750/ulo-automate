@@ -125,6 +125,8 @@ class WorkflowExecutor:
             return self._handle_office(task_type, props)
         elif "Data" in task_type:
             return self._handle_data(task_type, props, payload)
+        elif "Integration" in task_type:
+            return self._handle_native_integration(task_type, props, payload)
         elif "Read File" in task_type:
             path = props.get("url", "default.txt")
             with open(path, "r") as f:
@@ -471,4 +473,116 @@ class WorkflowExecutor:
                 return {"data_result": f"Error parsing CSV: {e}"}
                 
         return {"data_result": "Data formatted correctly."}
-
+        
+    def _handle_native_integration(self, task_type, props, payload):
+        import requests
+        import json
+        import base64
+        
+        api_key = props.get("api_key", "")
+        payload_data_str = props.get("payload", "{}")
+        
+        try:
+            payload_data = json.loads(payload_data_str) if payload_data_str.strip() else {}
+        except Exception as e:
+            return {"error": f"Failed to parse payload JSON: {e}"}
+            
+        try:
+            if "GitHub" in task_type:
+                repo = props.get("repo", "")
+                action = props.get("action", "get_repo")
+                headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/vnd.github+json"}
+                if action == "create_issue":
+                    url = f"https://api.github.com/repos/{repo}/issues"
+                    resp = requests.post(url, headers=headers, json=payload_data)
+                else:
+                    url = f"https://api.github.com/repos/{repo}"
+                    resp = requests.get(url, headers=headers)
+                return resp.json()
+                
+            elif "Jira" in task_type:
+                email = props.get("email", "")
+                domain = props.get("domain", "")
+                auth_str = f"{email}:{api_key}"
+                b64_auth = base64.b64encode(auth_str.encode()).decode()
+                headers = {"Authorization": f"Basic {b64_auth}", "Content-Type": "application/json"}
+                url = f"https://{domain}/rest/api/3/issue"
+                resp = requests.post(url, headers=headers, json={"fields": payload_data})
+                return {"status_code": resp.status_code, "response": resp.text}
+                
+            elif "Stripe" in task_type:
+                action = props.get("action", "create_customer")
+                headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/x-www-form-urlencoded"}
+                if action == "create_customer":
+                    url = "https://api.stripe.com/v1/customers"
+                else:
+                    url = "https://api.stripe.com/v1/charges"
+                resp = requests.post(url, headers=headers, data=payload_data)
+                return resp.json()
+                
+            elif "Discord" in task_type:
+                url = props.get("webhook_url", "")
+                resp = requests.post(url, json=payload_data)
+                return {"status_code": resp.status_code, "response": resp.text}
+                
+            elif "Notion" in task_type:
+                db_id = props.get("database_id", "")
+                headers = {
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "Notion-Version": "2022-06-28"
+                }
+                url = "https://api.notion.com/v1/pages"
+                data = {"parent": {"database_id": db_id}, "properties": payload_data}
+                resp = requests.post(url, headers=headers, json=data)
+                return resp.json()
+                
+            elif "Trello" in task_type:
+                token = props.get("token", "")
+                list_id = props.get("list_id", "")
+                url = "https://api.trello.com/1/cards"
+                query = {"key": api_key, "token": token, "idList": list_id}
+                query.update(payload_data)
+                resp = requests.post(url, params=query)
+                return resp.json()
+                
+            elif "Slack" in task_type:
+                channel = props.get("channel", "")
+                message = props.get("message", "")
+                headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+                url = "https://slack.com/api/chat.postMessage"
+                resp = requests.post(url, headers=headers, json={"channel": channel, "text": message})
+                return resp.json()
+                
+            elif "Mailchimp" in task_type:
+                list_id = props.get("list_id", "")
+                dc = api_key.split("-")[-1] if "-" in api_key else "us1"
+                url = f"https://{dc}.api.mailchimp.com/3.0/lists/{list_id}/members"
+                headers = {"Authorization": f"Bearer {api_key}"}
+                resp = requests.post(url, headers=headers, json=payload_data)
+                return resp.json()
+                
+            elif "Zendesk" in task_type:
+                domain = props.get("domain", "")
+                email = props.get("email", "")
+                auth_str = f"{email}/token:{api_key}"
+                b64_auth = base64.b64encode(auth_str.encode()).decode()
+                headers = {"Authorization": f"Basic {b64_auth}", "Content-Type": "application/json"}
+                url = f"https://{domain}.zendesk.com/api/v2/tickets.json"
+                resp = requests.post(url, headers=headers, json=payload_data)
+                return resp.json()
+                
+            elif "Shopify" in task_type:
+                store = props.get("store", "")
+                action = props.get("action", "get_products")
+                headers = {"X-Shopify-Access-Token": api_key, "Content-Type": "application/json"}
+                if action == "get_orders":
+                    url = f"https://{store}.myshopify.com/admin/api/2024-01/orders.json"
+                else:
+                    url = f"https://{store}.myshopify.com/admin/api/2024-01/products.json"
+                resp = requests.get(url, headers=headers)
+                return resp.json()
+                
+            return {"error": f"Integration not supported: {task_type}"}
+        except Exception as e:
+            return {"error": f"Native Integration failed: {str(e)}"}

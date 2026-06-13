@@ -259,6 +259,50 @@ class PropertiesPanelWidget(QWidget):
                     add_field("input_data", "Input Data (JSON 2D Array)", "textarea", '[[ "Name", "Age" ], [ "Alice", 30 ]]')
                 else:
                     add_field("cell_range", "Cell Range", "text", "A1:D10")
+        elif "Integration" in task_type:
+            if "GitHub" in task_type:
+                add_field("api_key", "GitHub PAT Token", "text", "ghp_...")
+                add_field("repo", "Repository (owner/repo)", "text", "torvalds/linux")
+                add_field("action", "Action (get_repo, create_issue)", "text", "create_issue")
+                add_field("payload", "Issue Data (JSON)", "textarea", '{"title": "Bug found", "body": "Details..."}')
+            elif "Jira" in task_type:
+                add_field("email", "Jira Email", "text", "user@domain.com")
+                add_field("api_key", "Jira API Token", "text", "...")
+                add_field("domain", "Jira Domain", "text", "your-domain.atlassian.net")
+                add_field("payload", "Ticket Data (JSON)", "textarea", '{"project": "PROJ", "summary": "Fix bug"}')
+            elif "Stripe" in task_type:
+                add_field("api_key", "Stripe Secret Key", "text", "sk_test_...")
+                add_field("action", "Action (create_customer, create_charge)", "text", "create_customer")
+                add_field("payload", "Data (JSON)", "textarea", '{"email": "jenny@example.com"}')
+            elif "Discord" in task_type:
+                add_field("webhook_url", "Discord Webhook URL", "text", "https://discord.com/api/webhooks/...")
+                add_field("payload", "Message Data (JSON)", "textarea", '{"content": "Hello World!"}')
+            elif "Notion" in task_type:
+                add_field("api_key", "Notion Integration Token", "text", "secret_...")
+                add_field("database_id", "Database ID", "text", "...")
+                add_field("payload", "Page Properties (JSON)", "textarea", '{"Name": {"title": [{"text": {"content": "Tuscan Kale"}}]}}')
+            elif "Trello" in task_type:
+                add_field("api_key", "Trello API Key", "text", "...")
+                add_field("token", "Trello Token", "text", "...")
+                add_field("list_id", "List ID", "text", "...")
+                add_field("payload", "Card Data (JSON)", "textarea", '{"name": "New Card"}')
+            elif "Slack" in task_type:
+                add_field("api_key", "Slack Bot Token", "text", "xoxb-...")
+                add_field("channel", "Channel ID", "text", "C123456")
+                add_field("message", "Message Text", "textarea", "Hello from Ulo!")
+            elif "Mailchimp" in task_type:
+                add_field("api_key", "Mailchimp API Key", "text", "...-usX")
+                add_field("list_id", "Audience List ID", "text", "...")
+                add_field("payload", "Subscriber Data (JSON)", "textarea", '{"email_address": "user@test.com", "status": "subscribed"}')
+            elif "Zendesk" in task_type:
+                add_field("domain", "Zendesk Subdomain", "text", "subdomain")
+                add_field("email", "Agent Email", "text", "agent@domain.com")
+                add_field("api_key", "Zendesk API Token", "text", "...")
+                add_field("payload", "Ticket Data (JSON)", "textarea", '{"ticket": {"subject": "Help", "comment": { "body": "Details" }}}')
+            elif "Shopify" in task_type:
+                add_field("store", "Shopify Store Name", "text", "your-store")
+                add_field("api_key", "Admin API Access Token", "text", "shpat_...")
+                add_field("action", "Action (get_products, get_orders)", "text", "get_products")
         elif "Security" in task_type or "Veracode" in task_type or "Falcon" in task_type:
             add_field("api_id", "API ID / Client ID", "text", "vera_id_...")
             add_field("api_key", "API Key / Secret", "text", "vera_key_...")

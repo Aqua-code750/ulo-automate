@@ -114,6 +114,18 @@ class NodePaletteWidget(QWidget):
             "Action: Crop Video",
             "Action: Extract Audio",
             
+            # Native Integrations
+            "Integration: GitHub",
+            "Integration: Jira",
+            "Integration: Stripe",
+            "Integration: Notion",
+            "Integration: Discord",
+            "Integration: Slack",
+            "Integration: Trello",
+            "Integration: Mailchimp",
+            "Integration: Zendesk",
+            "Integration: Shopify",
+            
             # AI Agents (ReAct Loop)
             "Agent: Create Persona",
             "Agent: Chat Memory",
