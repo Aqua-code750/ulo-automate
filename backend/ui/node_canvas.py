@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLineEdit
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt
 from NodeGraphQt import NodeGraph, BaseNode
 
 class BaseTaskNode(BaseNode):
