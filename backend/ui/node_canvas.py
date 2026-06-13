@@ -14,6 +14,7 @@ class BaseTaskNode(BaseNode):
 
 class NodeCanvasWidget(QWidget):
     node_selected = Signal(object)
+    execution_finished = Signal(object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -62,6 +63,20 @@ class NodeCanvasWidget(QWidget):
         # Node selection signal
         self.graph.node_selected.connect(self._on_node_selected)
         self.graph.node_selection_changed.connect(self._on_selection_changed)
+        self.execution_finished.connect(self.show_results, Qt.UniqueConnection)
+
+    def show_results(self, payload):
+        from PySide6.QtWidgets import QMessageBox
+        import json
+        
+        # Filter out verbose global/node tracking for a cleaner popup
+        clean_payload = {k: v for k, v in payload.items() if not k.startswith("node_")}
+        
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Workflow Completed Successfully!")
+        msg.setText("Your nodes have finished executing. Here is the output:")
+        msg.setDetailedText(json.dumps(clean_payload, indent=2))
+        msg.exec()
 
     def _on_node_selected(self, node):
         self.node_selected.emit(node)
@@ -111,8 +126,11 @@ class NodeCanvasWidget(QWidget):
             if node:
                 node.set_color(200, 50, 50) # Red
                 node.set_property('task_desc', f"Error: {err}")
+                
+        def _on_done(payload):
+            self.execution_finished.emit(payload)
 
-        executor = WorkflowExecutor(workflow_data, _on_success, _on_error)
+        executor = WorkflowExecutor(workflow_data, _on_success, _on_error, _on_done)
         
         # Run in thread so UI doesn't freeze
         t = threading.Thread(target=executor.run)

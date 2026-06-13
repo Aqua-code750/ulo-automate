@@ -10,10 +10,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class WorkflowExecutor:
-    def __init__(self, workflow_data, success_cb=None, error_cb=None):
+    def __init__(self, workflow_data, success_cb=None, error_cb=None, done_cb=None):
         self.workflow_data = workflow_data
         self.success_cb = success_cb
         self.error_cb = error_cb
+        self.done_cb = done_cb
 
     def run(self):
         nodes = self.workflow_data.get('nodes', [])
@@ -70,6 +71,8 @@ class WorkflowExecutor:
                 return False # Stop execution on failure
                 
         print("Final Payload:", payload)
+        if self.done_cb:
+            self.done_cb(payload)
         return True
 
     def _dispatch(self, task_type, props, payload):
